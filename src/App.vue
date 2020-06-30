@@ -370,6 +370,7 @@ import RichSuggesion from '@/components/RichSuggestion.vue'
 import * as uuidv1 from 'uuid/v1'
 
 import { Client } from 'dialogflow-gateway'
+import { Howl } from 'howler'
 
 export default {
     name: 'App',
@@ -399,8 +400,7 @@ export default {
             muted: this.config.muted,
             loading: false,
             error: null,
-            client: new Client(this.config.endpoint),
-            audio: new Audio()
+            client: new Client(this.config.endpoint)
         }
     },
     computed: {
@@ -530,10 +530,12 @@ export default {
         handle(response){
             /* This function is used for speech output */
             if (response.outputAudio){
-                this.audio.src = `data:${this.config.audio_encoding};base64,${response.outputAudio}`
-                this.audio.onended = () => this.$refs.input.listen()
+                window.audio = new Howl({
+                    src: `data:audio/wav;base64,${response.outputAudio}`
+                })
 
-                if (!this.muted) this.audio.play()
+                window.audio.on('end', () => this.$refs.input.listen())
+                if (!this.muted) window.audio.play()
             }
 
             else {
@@ -563,7 +565,7 @@ export default {
         },
         /* Stop audio playback when user is speaking */
         speaking(){
-            window.speechSynthesis.cancel() || this.audio.pause()
+            window.speechSynthesis.cancel() || window.audio.pause()
         }
     }
 }
